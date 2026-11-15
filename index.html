@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta http-equiv="refresh" content="600" />
+  <meta http-equiv="Cache-Control" content="no-cache" />
+  <meta name="theme-color" content="#0a0a0a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Yield Gamble" />
+  <meta name="application-name" content="Yield Gamble" />
+  <meta name="description" content="Justin's extreme-risk farm-rotation paper sim, targeting about 500% APY with honest reward-token accounting. Simulation only — no real funds." />
+  <title>Gamble Farm Sim (Extreme Risk) — Justin</title>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.png" />
+  <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0a0a0a; --bg-elev: #16120a; --text: #f6e7c3; --muted: #b9a57a;
+      --line: #3a3118; --accent: #f5c518; --accent-2: #ffe566;
+      --up: #34d399; --down: #fb7185; --warn: #f5c518; --link: #ffd666;
+      --shadow: 0 0 0 1px var(--line);
+      font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    }
+    @media (prefers-color-scheme: light) {
+      :root {
+        color-scheme: light;
+        --bg: #f7f1e1; --bg-elev: #fffdf6; --text: #1a1408; --muted: #6e5b2e;
+        --line: #e6d7a8; --accent: #b8860b; --accent-2: #8a6a00;
+        --up: #047857; --down: #be123c; --warn: #92400e; --link: #8a6a00;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.5; font-size: 17px; padding-bottom: env(safe-area-inset-bottom); }
+    header, main, footer { max-width: 1180px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+    header { padding-top: max(24px, env(safe-area-inset-top)); padding-bottom: 8px; }
+    h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 8px; line-height: 1.25; color: var(--accent); }
+    .sub, .meta, .muted { color: var(--muted); }
+    .sub, .meta, .deadline { margin: 0 0 6px; }
+    .banner { display: inline-block; background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; color: var(--muted); margin: 8px 0 16px; }
+    .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 20px 0 28px; }
+    @media (min-width: 900px) { .metrics { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+    .metric { background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 12px; padding: 14px 16px; }
+    .metric .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+    .metric .value { font-size: 1.4rem; font-weight: 700; margin-top: 4px; font-variant-numeric: tabular-nums; word-break: break-word; }
+    .up { color: var(--up); } .down { color: var(--down); }
+    h2 { font-size: 1.15rem; margin: 28px 0 10px; font-weight: 650; }
+    .panel { background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 12px; padding: 8px 0; overflow: auto; -webkit-overflow-scrolling: touch; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.92rem; font-variant-numeric: tabular-nums; }
+    th, td { padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--line); }
+    td { border-bottom: 1px solid var(--line); }
+    tr:last-child td { border-bottom: 0; }
+    td.num, th.num { text-align: right; }
+    td.nowrap { white-space: nowrap; }
+    td.tag, .tag { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 0.8rem; color: var(--accent-2); }
+    .risk, p.risk { color: var(--warn); font-size: 0.88rem; margin: 8px 0 0; }
+    a { color: var(--link); text-decoration: none; } a:hover { text-decoration: underline; }
+    .chart-wrap { background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 12px; padding: 12px 8px 8px; }
+    svg.chart { width: 100%; height: auto; display: block; }
+    svg.chart .line { fill: none; stroke: var(--accent); stroke-width: 2.25; }
+    svg.chart .area { fill: var(--accent); opacity: 0.14; }
+    svg.chart .dots circle { fill: var(--accent); }
+    svg.chart .axis text { fill: var(--muted); font-size: 10px; }
+    svg.chart .ref { stroke: var(--muted); stroke-dasharray: 4 4; stroke-width: 1; }
+    svg.chart .ref-label { fill: var(--muted); font-size: 10px; }
+    .note { font-size: 0.95rem; color: var(--muted); margin: 10px 0 0; }
+    .limits { color: var(--muted); font-size: 0.92rem; padding-left: 1.2em; }
+    footer { padding-top: 24px; padding-bottom: max(32px, env(safe-area-inset-bottom)); color: var(--muted); font-size: 0.9rem; }
+    .deadline.due { color: var(--warn); }
+    .cards { display: none; }
+    .pos-card, .log-card { background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 12px; padding: 14px 16px; }
+    .pos-head { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; font-weight: 650; }
+    .pos-value { font-variant-numeric: tabular-nums; white-space: nowrap; }
+    .pos-meta { color: var(--muted); margin: 4px 0 10px; font-size: 0.92rem; }
+    .pos-card dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 0; }
+    .pos-card dt { color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    .pos-card dd { margin: 0; font-variant-numeric: tabular-nums; font-weight: 600; }
+    .log-top { display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
+    .log-card time { color: var(--muted); font-size: 0.85rem; }
+    .log-card p { margin: 0 0 6px; }
+    .install-hint { margin-top: 12px; }
+    .sister-nav { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 10px; }
+    .sister-nav a { display: inline-block; background: var(--bg-elev); box-shadow: var(--shadow); border-radius: 999px; padding: 6px 12px; font-size: 0.85rem; }
+    .sister-nav a.current, .sister-nav a[aria-current="page"] { color: #111; background: var(--accent); font-weight: 650; }
+    @media (max-width: 900px) {
+      .desktop-only { display: none; }
+      .cards { display: grid; gap: 10px; }
+      h1 { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="banner">Extreme-risk paper trading — no real funds · farm rotation · target ~500% APY · honest reward-token marks</div>
+    <h1>Gamble Farm Sim (Extreme Risk)</h1>
+    <nav class="sister-nav" aria-label="All paper portfolios"><a href="https://jtncr.github.io/yield-sim-dashboard/">Low-risk stablecoin sim</a><a href="https://jtncr.github.io/yield-sim-highrisk-dashboard/">High-Yield Stablecoin Sim (Higher Risk)</a><a href="https://jtncr.github.io/yield-sim-degen-dashboard/">Degen Stablecoin Sim (Very High Risk)</a><a href="https://jtncr.github.io/yield-sim-gamble-dashboard/" class="current" aria-current="page">Gamble Farm Sim (Extreme Risk)</a></nav>
+    <p class="sub">Justin · Spruce Grove, Alberta · $1,000.00 USDC starting capital · DefiLlama yields + live token prices</p>
+    <p class="meta">Last updated: Sun, Nov 15, 2026, 5:09:04 PM Mountain Time (UTC-06:00)</p>
+    <p class="meta">Started: Sun, Nov 15, 2026, 5:08:29 PM Mountain Time (UTC-06:00)</p>
+    <p class="deadline">48-hour evaluation deadline: Tue, Nov 17, 2026, 5:08:29 PM Mountain Time (UTC-06:00) (48.0 hours remaining).</p>
+  </header>
+  <main>
+    <section class="metrics" aria-label="Portfolio summary">
+      <div class="metric"><div class="label">Total value</div><div class="value">$996.76</div></div>
+      <div class="metric"><div class="label">Realized P&amp;L</div><div class="value up">$0.00</div></div>
+      <div class="metric"><div class="label">Unrealized P&amp;L</div><div class="value down">-$3.24</div></div>
+      <div class="metric"><div class="label">Wins / losses</div><div class="value">0 / 0</div></div>
+      <div class="metric"><div class="label">Cash</div><div class="value">$5.00</div></div>
+      <div class="metric"><div class="label">Open bets</div><div class="value">8</div></div>
+      <div class="metric"><div class="label">Total P&amp;L</div><div class="value down">-$3.24 (-0.32%)</div></div>
+      <div class="metric"><div class="label">Gas + slippage</div><div class="value">$3.25</div></div>
+    </section>
+    <h2>Open bets</h2>
+    <div class="panel desktop-only">
+      <table>
+        <thead>
+          <tr>
+            <th>Pool</th><th>Protocol</th><th>Chain</th>
+            <th class="num">Alloc</th><th class="num">Value</th><th class="num">Principal</th>
+            <th class="num">Unsold</th><th class="num">APY base</th><th class="num">APY reward</th>
+            <th class="num">Headline</th><th>Reward token / price</th><th class="num">TVL</th><th class="num">Time left</th>
+          </tr>
+        </thead>
+        <tbody><tr><td><a href="https://defillama.com/yields/pool/ee81c1cf-c808-51c9-b0de-6c9ed0b0648b">Fables USDG-ULAB (Staked CL (in-range average), Robinhood Chain)</a></td><td>Fables</td><td>Robinhood Chain</td><td class='num'>12.43%</td><td class='num'>$123.88</td><td class='num'>$123.88</td><td class='num'>$0.00</td><td class='num'>0.0%</td><td class='num'>597.6%</td><td class='num'>597.6%</td><td>FABLES $0.03 (DefiLlama coins)</td><td class='num'>$151.8k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/05326e1b-b7ae-549e-8ad0-dd71416f331b">Fables MCD-CBBTC (Staked CL (in-range average), Robinhood Chain)</a></td><td>Fables</td><td>Robinhood Chain</td><td class='num'>12.43%</td><td class='num'>$123.88</td><td class='num'>$123.88</td><td class='num'>$0.00</td><td class='num'>0.0%</td><td class='num'>491.9%</td><td class='num'>491.9%</td><td>FABLES $0.03 (DefiLlama coins)</td><td class='num'>$152.5k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/a85a5521-d622-5da6-bb25-23f98cc7abd2">Orca WECX-USDC (Solana)</a></td><td>Orca</td><td>Solana</td><td class='num'>12.45%</td><td class='num'>$124.13</td><td class='num'>$124.12</td><td class='num'>$0.00</td><td class='num'>357.6%</td><td class='num'>0.0%</td><td class='num'>357.6%</td><td>None (fee or unmarked APY)</td><td class='num'>$1.05M</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/3256805f-20cf-549f-9d88-7fa9c87601f6">Uniswap v4 GANG-USDT (2.10%, BSC)</a></td><td>Uniswap v4</td><td>BSC</td><td class='num'>12.43%</td><td class='num'>$123.88</td><td class='num'>$123.88</td><td class='num'>$0.00</td><td class='num'>831.9%</td><td class='num'>0.0%</td><td class='num'>831.9%</td><td>None (fee or unmarked APY)</td><td class='num'>$133.8k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/7293b4f5-43df-54db-803b-decb9a3d5a53">Raydium TTWO-USDC (Concentrated - 0.2%, Solana)</a></td><td>Raydium</td><td>Solana</td><td class='num'>12.45%</td><td class='num'>$124.13</td><td class='num'>$124.12</td><td class='num'>$0.00</td><td class='num'>624.2%</td><td class='num'>0.0%</td><td class='num'>624.2%</td><td>None (fee or unmarked APY)</td><td class='num'>$683.5k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/41e78763-9329-5738-9d27-5ec913347238">Raydium ANTHROPIC-USDC (Concentrated - 0.25%, Solana)</a></td><td>Raydium</td><td>Solana</td><td class='num'>12.45%</td><td class='num'>$124.13</td><td class='num'>$124.12</td><td class='num'>$0.00</td><td class='num'>276.8%</td><td class='num'>0.0%</td><td class='num'>276.8%</td><td>None (fee or unmarked APY)</td><td class='num'>$957.8k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/ce792a94-391e-5a01-8604-35408ac6d2a7">Ekubo USDC-ZEC (0.30% fee | CL range 10.24%, Starknet)</a></td><td>Ekubo</td><td>Starknet</td><td class='num'>12.43%</td><td class='num'>$123.88</td><td class='num'>$123.88</td><td class='num'>$0.00</td><td class='num'>490.5%</td><td class='num'>0.0%</td><td class='num'>490.5%</td><td>None (fee or unmarked APY)</td><td class='num'>$311.6k</td><td class='num'>0.0h / 72h</td></tr><tr><td><a href="https://defillama.com/yields/pool/d527a537-22f8-454d-b34a-a7c0463288f2">Blackhole Clmm BTC.B-USDT (CL - 200, Avalanche)</a></td><td>Blackhole Clmm</td><td>Avalanche</td><td class='num'>12.43%</td><td class='num'>$123.88</td><td class='num'>$123.88</td><td class='num'>$0.00</td><td class='num'>0.0%</td><td class='num'>675.9%</td><td class='num'>675.9%</td><td>BLACK $0.00 (DefiLlama coins)</td><td class='num'>$190.7k</td><td class='num'>0.0h / 72h</td></tr></tbody>
+      </table>
+    </div>
+    <div class="cards"><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/ee81c1cf-c808-51c9-b0de-6c9ed0b0648b">Fables USDG-ULAB (Staked CL (in-range average), Robinhood Chain)</a><span class='pos-value'>$123.88</span></div><div class='pos-meta'>Fables · Robinhood Chain</div><dl><div><dt>Allocation</dt><dd>12.43%</dd></div><div><dt>Principal (MTM)</dt><dd>$123.88</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>0.0% / 597.6%</dd></div><div><dt>Headline APY</dt><dd>597.6%</dd></div><div><dt>TVL</dt><dd>$151.8k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: FABLES $0.03 (DefiLlama coins)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/05326e1b-b7ae-549e-8ad0-dd71416f331b">Fables MCD-CBBTC (Staked CL (in-range average), Robinhood Chain)</a><span class='pos-value'>$123.88</span></div><div class='pos-meta'>Fables · Robinhood Chain</div><dl><div><dt>Allocation</dt><dd>12.43%</dd></div><div><dt>Principal (MTM)</dt><dd>$123.88</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>0.0% / 491.9%</dd></div><div><dt>Headline APY</dt><dd>491.9%</dd></div><div><dt>TVL</dt><dd>$152.5k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: FABLES $0.03 (DefiLlama coins)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/a85a5521-d622-5da6-bb25-23f98cc7abd2">Orca WECX-USDC (Solana)</a><span class='pos-value'>$124.13</span></div><div class='pos-meta'>Orca · Solana</div><dl><div><dt>Allocation</dt><dd>12.45%</dd></div><div><dt>Principal (MTM)</dt><dd>$124.12</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>357.6% / 0.0%</dd></div><div><dt>Headline APY</dt><dd>357.6%</dd></div><div><dt>TVL</dt><dd>$1.05M</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: None (fee or unmarked APY)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/3256805f-20cf-549f-9d88-7fa9c87601f6">Uniswap v4 GANG-USDT (2.10%, BSC)</a><span class='pos-value'>$123.88</span></div><div class='pos-meta'>Uniswap v4 · BSC</div><dl><div><dt>Allocation</dt><dd>12.43%</dd></div><div><dt>Principal (MTM)</dt><dd>$123.88</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>831.9% / 0.0%</dd></div><div><dt>Headline APY</dt><dd>831.9%</dd></div><div><dt>TVL</dt><dd>$133.8k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: None (fee or unmarked APY)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/7293b4f5-43df-54db-803b-decb9a3d5a53">Raydium TTWO-USDC (Concentrated - 0.2%, Solana)</a><span class='pos-value'>$124.13</span></div><div class='pos-meta'>Raydium · Solana</div><dl><div><dt>Allocation</dt><dd>12.45%</dd></div><div><dt>Principal (MTM)</dt><dd>$124.12</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>624.2% / 0.0%</dd></div><div><dt>Headline APY</dt><dd>624.2%</dd></div><div><dt>TVL</dt><dd>$683.5k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: None (fee or unmarked APY)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/41e78763-9329-5738-9d27-5ec913347238">Raydium ANTHROPIC-USDC (Concentrated - 0.25%, Solana)</a><span class='pos-value'>$124.13</span></div><div class='pos-meta'>Raydium · Solana</div><dl><div><dt>Allocation</dt><dd>12.45%</dd></div><div><dt>Principal (MTM)</dt><dd>$124.12</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>276.8% / 0.0%</dd></div><div><dt>Headline APY</dt><dd>276.8%</dd></div><div><dt>TVL</dt><dd>$957.8k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: None (fee or unmarked APY)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/ce792a94-391e-5a01-8604-35408ac6d2a7">Ekubo USDC-ZEC (0.30% fee | CL range 10.24%, Starknet)</a><span class='pos-value'>$123.88</span></div><div class='pos-meta'>Ekubo · Starknet</div><dl><div><dt>Allocation</dt><dd>12.43%</dd></div><div><dt>Principal (MTM)</dt><dd>$123.88</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>490.5% / 0.0%</dd></div><div><dt>Headline APY</dt><dd>490.5%</dd></div><div><dt>TVL</dt><dd>$311.6k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: None (fee or unmarked APY)</p></article><article class='pos-card'><div class='pos-head'><a href="https://defillama.com/yields/pool/d527a537-22f8-454d-b34a-a7c0463288f2">Blackhole Clmm BTC.B-USDT (CL - 200, Avalanche)</a><span class='pos-value'>$123.88</span></div><div class='pos-meta'>Blackhole Clmm · Avalanche</div><dl><div><dt>Allocation</dt><dd>12.43%</dd></div><div><dt>Principal (MTM)</dt><dd>$123.88</dd></div><div><dt>Unsold rewards/fees</dt><dd>$0.00</dd></div><div><dt>APY base / reward</dt><dd>0.0% / 675.9%</dd></div><div><dt>Headline APY</dt><dd>675.9%</dd></div><div><dt>TVL</dt><dd>$190.7k</dd></div><div><dt>Held</dt><dd>0.0h / 72h</dd></div><div><dt>Harvested so far</dt><dd>$0.00</dd></div></dl><p class='risk'>Rewards: BLACK $0.00 (DefiLlama coins)</p></article></div>
+    <p class="note">Posted headline APY is <strong>not</strong> compounded into the book. Reward emissions are converted into tokens using the posted reward APY and last live price, then sold each cycle at the new live price minus slippage (size vs TVL plus a 0.3% fee) and gas. Principal for non-stable pools is marked with a constant-product IL approximation when underlying prices exist. Take profit at +50%, trailing stop if a reward token falls 25% from its high, exit if TVL drops 40% from peak or APY falls below 100%, hard 72-hour time limit, and a 0–30% recovery if a pool vanishes or TVL collapses more than 70%.</p>
+    <h2>Value over time</h2>
+    <div class="chart-wrap"><svg class="chart" viewBox="0 0 720 240" role="img" aria-label="Portfolio value over time">
+  <g class="grid"><line x1="56" y1="38.12" x2="704" y2="38.12" class="ref" /></g>
+  <text x="62" y="32.12" class="ref-label">Start $1,000.00</text>
+  <path class="area" d="M 56.00,181.88 L 704.00,181.63 L 704.00,204.00 L 56.00,204.00 Z" />
+  <path class="line" d="M 56.00,181.88 L 704.00,181.63" />
+  <g class="dots"><circle cx="56.00" cy="181.88" r="3" /><circle cx="704.00" cy="181.63" r="3" /></g>
+  <g class="axis"><text x="48" y="204.00" text-anchor="end">$996.25</text><text x="48" y="157.00" text-anchor="end">$997.31</text><text x="48" y="110.00" text-anchor="end">$998.38</text><text x="48" y="63.00" text-anchor="end">$999.44</text><text x="48" y="16.00" text-anchor="end">$1,000.50</text><text x="56" y="232" text-anchor="start">Nov 15, 5:08:30 PM</text><text x="704" y="232" text-anchor="end">Nov 15, 5:09:04 PM</text></g>
+</svg></div>
+    <p class="note">Chart times are Mountain Time (America/Edmonton). The dashed line is the $1,000.00 starting capital. Early P&amp;L is usually slightly negative because simulated gas and harvest slippage are paid up front.</p>
+    <h2>Closed bets</h2>
+    <div class="panel desktop-only">
+      <table>
+        <thead><tr><th>Exit (Mountain)</th><th>Pool</th><th>Reason</th><th class="num">Held</th><th class="num">Realized P&amp;L</th></tr></thead>
+        <tbody><tr><td colspan='5'>No closed bets yet.</td></tr></tbody>
+      </table>
+    </div>
+    <div class="cards"><article class='log-card'><p>No closed bets yet.</p></article></div>
+    <h2>Data limitations</h2>
+    <ul class='limits'><li>No live price from DefiLlama coins or DexScreener for: Base:0x795e806c…, Base:0x3f53a22d…, Optimism:0xCa0E54b6…, TON:EQBwGRAMjT…. Unpriced reward tokens are accrued as a posted-APY notional and excluded from official value until a price appears. Unpriced underlyings are not marked to market.</li></ul>
+    <h2>Transaction log</h2>
+    <div class="panel desktop-only">
+      <table>
+        <thead><tr><th>Time (Mountain)</th><th>Action</th><th>Reason</th></tr></thead>
+        <tbody><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Blackhole Clmm BTC.B-USDT (CL - 200, Avalanche) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 675.90% (base 0.00%, reward 675.90%), TVL $190.7k. Reward tokens: BLACK @ $0.00 (DefiLlama coins).</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Ekubo USDC-ZEC (0.30% fee | CL range 10.24%, Starknet) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 490.53% (base 490.53%, reward 0.00%), TVL $311.6k. Reward tokens: none listed.</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Raydium ANTHROPIC-USDC (Concentrated - 0.25%, Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 276.78% (base 276.78%, reward 0.00%), TVL $957.8k. Reward tokens: none listed.</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Raydium TTWO-USDC (Concentrated - 0.2%, Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 624.20% (base 624.20%, reward 0.00%), TVL $683.5k. Reward tokens: none listed.</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Uniswap v4 GANG-USDT (2.10%, BSC) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 831.87% (base 831.87%, reward 0.00%), TVL $133.8k. Reward tokens: none listed.</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Orca WECX-USDC (Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 357.64% (base 357.64%, reward 0.00%), TVL $1.05M. Reward tokens: none listed.</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Fables MCD-CBBTC (Staked CL (in-range average), Robinhood Chain) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 491.94% (base 0.00%, reward 491.94%), TVL $152.5k. Reward tokens: FABLES @ $0.03 (DefiLlama coins).</td></tr><tr><td class='nowrap'>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</td><td class='tag'>enter</td><td>Opened Fables USDG-ULAB (Staked CL (in-range average), Robinhood Chain) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 597.56% (base 0.00%, reward 597.56%), TVL $151.8k. Reward tokens: FABLES @ $0.03 (DefiLlama coins).</td></tr></tbody>
+      </table>
+    </div>
+    <div class="cards"><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Blackhole Clmm BTC.B-USDT (CL - 200, Avalanche) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 675.90% (base 0.00%, reward 675.90%), TVL $190.7k. Reward tokens: BLACK @ $0.00 (DefiLlama coins).</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Ekubo USDC-ZEC (0.30% fee | CL range 10.24%, Starknet) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 490.53% (base 490.53%, reward 0.00%), TVL $311.6k. Reward tokens: none listed.</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Raydium ANTHROPIC-USDC (Concentrated - 0.25%, Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 276.78% (base 276.78%, reward 0.00%), TVL $957.8k. Reward tokens: none listed.</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Raydium TTWO-USDC (Concentrated - 0.2%, Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 624.20% (base 624.20%, reward 0.00%), TVL $683.5k. Reward tokens: none listed.</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Uniswap v4 GANG-USDT (2.10%, BSC) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 831.87% (base 831.87%, reward 0.00%), TVL $133.8k. Reward tokens: none listed.</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Orca WECX-USDC (Solana) with $124.38 (gas $0.25, net principal $124.12). Advertised APY 357.64% (base 357.64%, reward 0.00%), TVL $1.05M. Reward tokens: none listed.</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Fables MCD-CBBTC (Staked CL (in-range average), Robinhood Chain) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 491.94% (base 0.00%, reward 491.94%), TVL $152.5k. Reward tokens: FABLES @ $0.03 (DefiLlama coins).</p></article><article class='log-card'><div class='log-top'><span class='tag'>enter</span><time>Sun, Nov 15, 2026, 5:08:30 PM Mountain Time (UTC-06:00)</time></div><p>Opened Fables USDG-ULAB (Staked CL (in-range average), Robinhood Chain) with $124.38 (gas $0.50, net principal $123.88). Advertised APY 597.56% (base 0.00%, reward 597.56%), TVL $151.8k. Reward tokens: FABLES @ $0.03 (DefiLlama coins).</p></article></div>
+  </main>
+  <footer>
+    Simulation only. This is not financial advice. Yields and token prices come from public APIs and will change — often violently at this risk level.
+    This page refreshes automatically every 10 minutes.
+    <p class="install-hint">On Android Chrome, tap the menu and choose <strong>Add to Home screen</strong>. This icon is gold-on-black and named Yield Gamble, so it will sit beside the other three paper books. The page contains only paper-trading numbers — no wallets or secrets.</p>
+    <p class="install-hint">Public URL: <a href="https://jtncr.github.io/yield-sim-gamble-dashboard/">https://jtncr.github.io/yield-sim-gamble-dashboard/</a></p>
+    <p class="install-hint">All four books:</p>
+    <nav class="sister-nav" aria-label="All paper portfolios"><a href="https://jtncr.github.io/yield-sim-dashboard/">Low-risk stablecoin sim</a><a href="https://jtncr.github.io/yield-sim-highrisk-dashboard/">High-Yield Stablecoin Sim (Higher Risk)</a><a href="https://jtncr.github.io/yield-sim-degen-dashboard/">Degen Stablecoin Sim (Very High Risk)</a><a href="https://jtncr.github.io/yield-sim-gamble-dashboard/" class="current" aria-current="page">Gamble Farm Sim (Extreme Risk)</a></nav>
+  </footer>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("sw.js").catch(function () {});
+    }
+  </script>
+</body>
+</html>
